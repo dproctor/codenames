@@ -8,48 +8,41 @@ A hosted version of the app is available at [www.horsepaste.com](https://www.hor
 
 ![Spymaster view of board](https://raw.githubusercontent.com/jbowens/codenames/master/screenshot.png)
 
-## Building
+### Hosting on GCP
 
-The app requires a [Go](https://golang.org/) toolchain, node.js and [parcel](https://parceljs.org/) to build. Once you have those setup, build the application Go binary with:
-
+To create the GCP instance
 ```
-go install github.com/jbowens/codenames/cmd/codenames
-```
-
-Then from the frontend directory, install the node modules:
-
-```
-npm install
+docker-machine create \
+    --driver google \
+    --google-machine-type f1-micro \
+    --google-project $GOOGLE_PROJECT \
+    google-micro
 ```
 
-and start the app (listens to changes)
+Make sure that GCP firewall rules are set up to allow all ingress to tcp:9091.
+Once the instance is created, make sure to add `codenames` network tag to apply
+the rule.
 
+connect to remote docker host
 ```
-npm start
-```
-
-or build the app
-
-```
-npm run build
+eval $(docker-machine env google-micro)
 ```
 
-### Docker
-
-Alternatively, the reposotiry includes a Dockerfile for building a docker image of this app.
-
+and run the service
 ```
-docker build . -t codenames:latest
+docker run --name codenames_server --rm -p 9091:9091 -d devonproctor/codenames
 ```
 
-The following command will launch the docker image:
+The (ephemeral) external IP is visible under `VM instances`, and the game is served on port
+9091.
+
+After completing the game, don't forget to turn down the server
 
 ```
-docker run --name codenames_server --rm -p 9091:9091 -d codenames
+docker-machine stop google-micro
 ```
 
-The following command will kill the docker instance:
-
+and, optionally remove the instance to avoid charges for the persistent disk.
 ```
-docker stop codenames_server
+docker-machine rm google-micro
 ```
